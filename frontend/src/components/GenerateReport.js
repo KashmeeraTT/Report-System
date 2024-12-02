@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./GenerateReport.css"; // Import CSS for styling
+import "./GenerateReport.css";
 
 function GenerateReport() {
     const [formData, setFormData] = useState({
@@ -9,36 +9,18 @@ function GenerateReport() {
         district: "",
     });
 
-    const [report, setReport] = useState(null);
+    const [reportPages, setReportPages] = useState([]);
+    const [currentPage, setCurrentPage] = useState(0);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
     const districts = [
-        "Colombo",
-        "Gampaha",
-        "Kalutara",
-        "Kandy",
-        "Matale",
-        "Nuwara Eliya",
-        "Galle",
-        "Matara",
-        "Hambantota",
-        "Jaffna",
-        "Kilinochchi",
-        "Mannar",
-        "Vavuniya",
-        "Mullaitivu",
-        "Batticaloa",
-        "Ampara",
-        "Trincomalee",
-        "Kurunegala",
-        "Puttalam",
-        "Anuradhapura",
-        "Polonnaruwa",
-        "Badulla",
-        "Moneragala",
-        "Ratnapura",
-        "Kegalle",
+        "Colombo", "Gampaha", "Kalutara", "Kandy", "Matale",
+        "Puttalam", "Trincomalee", "Ratnapura", "Nuwara Eliya",
+        "Matara", "Galle", "Hambantota", "Jaffna", "Kilinochchi",
+        "Mannar", "Vavuniya", "Mullaitivu", "Batticaloa", "Ampara",
+        "Kurunegala", "Anuradhapura", "Polonnaruwa", "Badulla",
+        "Moneragala", "Ratnapura", "Kegalle",
     ];
 
     const handleChange = (e) => {
@@ -50,14 +32,13 @@ function GenerateReport() {
         e.preventDefault();
         setLoading(true);
         setError(null);
-        setReport(null);
+        setReportPages([]);
+        setCurrentPage(0);
 
         try {
             const response = await fetch("http://localhost:3000/api/reports/generate-report", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             });
 
@@ -66,7 +47,10 @@ function GenerateReport() {
             }
 
             const htmlReport = await response.text();
-            setReport(htmlReport); // Set report for viewing in the browser
+
+            // Split the report into pages using the marker
+            const pages = htmlReport.split("<!-- PAGE BREAK -->");
+            setReportPages(pages);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -78,9 +62,7 @@ function GenerateReport() {
         try {
             const response = await fetch("http://localhost:3000/api/reports/generate-report", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             });
 
@@ -89,20 +71,27 @@ function GenerateReport() {
             }
 
             const blob = await response.blob();
-
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-
-            const { year, month, day, district } = formData;
-            const filename = `${district}_Report_${day}_${month}_${year}.html`;
+            const filename = `${formData.district}_Report_${formData.day}_${formData.month}_${formData.year}.html`;
             a.download = filename;
-
             a.click();
-
             window.URL.revokeObjectURL(url);
         } catch (err) {
             setError(err.message);
+        }
+    };
+
+    const handleNextPage = () => {
+        if (currentPage < reportPages.length - 1) {
+            setCurrentPage(currentPage + 1);
+        }
+    };
+
+    const handlePreviousPage = () => {
+        if (currentPage > 0) {
+            setCurrentPage(currentPage - 1);
         }
     };
 
@@ -121,6 +110,8 @@ function GenerateReport() {
                             onChange={handleChange}
                             className="input"
                             required
+                            min="1900"
+                            max="2100"
                         />
                     </div>
                     <div className="form-group">
@@ -135,22 +126,10 @@ function GenerateReport() {
                         >
                             <option value="">Select a month</option>
                             {[
-                                "January",
-                                "February",
-                                "March",
-                                "April",
-                                "May",
-                                "June",
-                                "July",
-                                "August",
-                                "September",
-                                "October",
-                                "November",
-                                "December",
+                                "January", "February", "March", "April", "May", "June",
+                                "July", "August", "September", "October", "November", "December"
                             ].map((month) => (
-                                <option key={month} value={month}>
-                                    {month}
-                                </option>
+                                <option key={month} value={month}>{month}</option>
                             ))}
                         </select>
                     </div>
@@ -166,9 +145,7 @@ function GenerateReport() {
                         >
                             <option value="">Select a day</option>
                             {[...Array(31).keys()].map((day) => (
-                                <option key={day + 1} value={day + 1}>
-                                    {day + 1}
-                                </option>
+                                <option key={day + 1} value={day + 1}>{day + 1}</option>
                             ))}
                         </select>
                     </div>
@@ -184,35 +161,47 @@ function GenerateReport() {
                         >
                             <option value="">Select a district</option>
                             {districts.map((district) => (
-                                <option key={district} value={district}>
-                                    {district}
-                                </option>
+                                <option key={district} value={district}>{district}</option>
                             ))}
                         </select>
                     </div>
-                    <button type="submit" className="button">
-                        View Report
-                    </button>
+                    <button type="submit" className="button">Generate Report</button>
                 </form>
                 {loading && <p className="loading">Generating report...</p>}
                 {error && <p className="error">{error}</p>}
-                {report && (
+                {reportPages.length > 0 && (
                     <div className="button-container">
-                        <button onClick={handleDownload} className="button download-button">
-                            Download Report
-                        </button>
+                        <button onClick={handleDownload} className="button">Download Report</button>
                     </div>
                 )}
             </div>
             <div className="report-container">
-                {report ? (
-                    <div className="report">
-                        <h2>Generated Report:</h2>
+                {reportPages.length > 0 ? (
+                    <div className="report-viewer">
                         <iframe
-                            title="Report"
-                            srcDoc={report}
+                            title="Report Page"
+                            srcDoc={reportPages[currentPage]}
                             className="iframe"
                         ></iframe>
+                        <div className="pagination-controls">
+                            <button
+                                onClick={handlePreviousPage}
+                                disabled={currentPage === 0}
+                                className="pagination-button"
+                            >
+                                Previous
+                            </button>
+                            <span className="page-indicator">
+                                Page {currentPage + 1} of {reportPages.length}
+                            </span>
+                            <button
+                                onClick={handleNextPage}
+                                disabled={currentPage === reportPages.length - 1}
+                                className="pagination-button"
+                            >
+                                Next
+                            </button>
+                        </div>
                     </div>
                 ) : (
                     <p className="placeholder">The report will appear here once generated.</p>
@@ -220,6 +209,7 @@ function GenerateReport() {
             </div>
         </div>
     );
+
 }
 
 export default GenerateReport;
