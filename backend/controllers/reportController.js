@@ -7,6 +7,26 @@ function calculateWeekNumber(day, month, year) {
     return date.isoWeek();
 }
 
+// Adjusts week numbers and years if they fall outside the current year.
+function adjustWeekNumbers(year, startWeekNumber, weeksToCheck = 4) {
+    const weeks = [];
+
+    for (let i = 0; i < weeksToCheck; i++) {
+        const currentDate = moment()
+            .year(year)
+            .isoWeek(startWeekNumber + i)
+            .startOf("isoWeek");
+
+        // If the calculated week number overflows, adjust the year and week number
+        weeks.push({
+            weekNumber: currentDate.isoWeek(),
+            year: currentDate.year(),
+        });
+    }
+
+    return weeks;
+}
+
 // Find the nearest previous document within one year
 async function findNearestPrevious(category, subcategory, district, year, month, day) {
     const months = [
@@ -58,7 +78,7 @@ async function findNearestPrevious(category, subcategory, district, year, month,
 function generateSection(title, data) {
     if (!data) {
         return `
-            <div class="section">
+            <div class="section" style="page-break-after: always;">
                 <h2>${title}</h2>
                 <p>Data not available.</p>
             </div>
@@ -71,16 +91,50 @@ function generateSection(title, data) {
     const png2Base64 = data.content.png2 ? `data:image/png;base64,${data.content.png2.toString('base64')}` : null;
     const png3Base64 = data.content.png3 ? `data:image/png;base64,${data.content.png3.toString('base64')}` : null;
 
+    // Helper to render CSV data as a table
+    const renderCsvToHtmlTable = (csvData) => {
+        if (!csvData) return "";
+
+        const rows = csvData.split("\n");
+        let htmlTable = "<table border='1' style='border-collapse: collapse; width: 100%; text-align: left;'>";
+
+        rows.forEach((row, rowIndex) => {
+            const columns = row.split(",");
+            if (rowIndex === 0) {
+                // Header row
+                htmlTable += "<tr>";
+                columns.forEach((cell) => {
+                    htmlTable += `<th style="padding: 8px; background-color: #f2f2f2;">${cell.trim()}</th>`;
+                });
+                htmlTable += "</tr>";
+            } else {
+                // Data rows
+                htmlTable += "<tr>";
+                columns.forEach((cell) => {
+                    htmlTable += `<td style="padding: 8px;">${cell.trim()}</td>`;
+                });
+                htmlTable += "</tr>";
+            }
+        });
+
+        htmlTable += "</table>";
+        return htmlTable;
+    };
+
+    // Render CSV 1 and CSV 2 tables
+    const csv1Table = data.content.csv1 ? renderCsvToHtmlTable(data.content.csv1) : "";
+    const csv2Table = data.content.csv2 ? renderCsvToHtmlTable(data.content.csv2) : "";
+
     return `
-        <div class="section">
+        <div class="section" style="page-break-after: always;">
             <h2>${title}</h2>
             <p style="text-align: justify;">${data.content.text || "No text available."}</p>
-            <div style="text-align: center;">
-                ${png1Base64 ? `<img src="${png1Base64}" alt="${title} Image 1" />` : ""}
-                ${png2Base64 ? `<img src="${png2Base64}" alt="${title} Image 2" />` : ""}
-                ${png3Base64 ? `<img src="${png3Base64}" alt="${title} Image 3" />` : ""}
-                ${data.content.csv1 ? `<p>CSV File 1: <a href="${data.content.csv1}" target="_blank">Download</a></p>` : ""}
-                ${data.content.csv2 ? `<p>CSV File 2: <a href="${data.content.csv2}" target="_blank">Download</a></p>` : ""}
+            <div style="text-align: center; margin-top: 20px;">
+                ${png1Base64 ? `<img src="${png1Base64}" alt="${title} Image 1" style="max-width: 80%; margin: 10px auto;" />` : ""}
+                ${png2Base64 ? `<img src="${png2Base64}" alt="${title} Image 2" style="max-width: 80%; margin: 10px auto;" />` : ""}
+                ${png3Base64 ? `<img src="${png3Base64}" alt="${title} Image 3" style="max-width: 80%; margin: 10px auto;" />` : ""}
+                ${csv1Table ? `<div style="margin-top: 20px;">${csv1Table}</div>` : ""}
+                ${csv2Table ? `<div style="margin-top: 20px;">${csv2Table}</div>` : ""}
             </div>
         </div>
         <!-- PAGE BREAK -->
@@ -93,6 +147,8 @@ exports.generateReport = async (req, res) => {
 
     try {
         const weekNumber = calculateWeekNumber(day, month, year);
+        const adjustedWeekNumbers = adjustWeekNumbers(year, weekNumber)
+        console.log(adjustedWeekNumbers);
 
         // Fetch data for all sections of the report
         const seasonalRainfall = await Meteorology.findOne({ category: "Rainfall", subcategory: "Seasonal", month, year });
@@ -113,7 +169,7 @@ exports.generateReport = async (req, res) => {
 
         const previousMonth = moment(`${year}-${month}-${day}`, "YYYY-MMMM-DD").subtract(1, "month").format("MMMM");
         const previousMonthYear = moment(`${year}-${month}-${day}`, "YYYY-MMMM-DD").subtract(1, "month").year();
-        const receivedRainfall = await Meteorology.findOne({ category: "Rainfall", subcategory: "Received", year, month: previousMonth, district });
+        const receivedRainfall = await Meteorology.findOne({ category: "Rainfall", subcategory: "Recieved", year, month: previousMonth, district });
 
         const climatologicalRainfall = await Meteorology.findOne({ category: "Rainfall", subcategory: "Climatological", year, month, district });
 
@@ -123,7 +179,7 @@ exports.generateReport = async (req, res) => {
 
         // Generate dynamic introduction
         const introduction = `
-            <div class="section">
+            <div class="section" style="page-break-after: always;">
                 <h1>District Agro-met Advisory Co-production</h1>
                 <h2>${district} District</h2>
                 <h3>${day} ${month} ${year}</h3>
@@ -188,10 +244,10 @@ exports.generateReport = async (req, res) => {
                     ${generateSection(`Rainfall Forecast ${month} ${year}`, rainfallForecast1)}
                     ${generateSection(`Rainfall Forecast ${nextMonth1} ${nextMonth1Year}`, rainfallForecast2)}
                     ${generateSection(`Rainfall Forecast ${nextMonth2} ${nextMonth2Year}`, rainfallForecast3)}
-                    ${generateSection(`Weekly Rainfall 1 (Week ${weekNumber}) ${district}`, weeklyRainfall1)}
-                    ${generateSection(`Weekly Rainfall 2 (Week ${weekNumber}) ${district}`, weeklyRainfall2)}
-                    ${generateSection(`Weekly Rainfall 3 (Week ${weekNumber}) ${district}`, weeklyRainfall3)}
-                    ${generateSection(`Weekly Rainfall 4 (Week ${weekNumber}) ${district}`, weeklyRainfall4)}
+                    ${generateSection(`Weekly Rainfall ${district} District Week ${weekNumber} ${year}`, weeklyRainfall1)}
+                    ${generateSection(`Weekly Rainfall ${district} District Week ${adjustedWeekNumbers[1].weekNumber} ${adjustedWeekNumbers[1].year}`, weeklyRainfall2)}
+                    ${generateSection(`Weekly Rainfall ${district} District Week ${adjustedWeekNumbers[2].weekNumber} ${adjustedWeekNumbers[2].year}`, weeklyRainfall3)}
+                    ${generateSection(`Weekly Rainfall ${district} District Week ${adjustedWeekNumbers[3].weekNumber} ${adjustedWeekNumbers[3].year}`, weeklyRainfall4)}
                     ${generateSection(`Received Rainfall ${previousMonth} ${previousMonthYear}`, receivedRainfall)}
                     ${generateSection(`General Climatological Rainfall ${month} ${year}`, climatologicalRainfall)}
                     ${generateSection(`Major Reservoir Water Availability as of ${day} ${month} ${year}`, majorReservoir)}

@@ -150,3 +150,13 @@
     font-size: 16px;
     color: #555;
 }
+
+.disabled-button {
+    background-color: gray;
+    cursor: not-allowed;
+}
+
+.note {
+    margin-top: 10px;
+    font-size: 14px;
+}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./GenerateReport.css";
 
 function GenerateReport() {
@@ -7,6 +7,7 @@ function GenerateReport() {
         month: "",
         day: "",
         district: "",
+        observedPrecipitation: "", // New field for observed precipitation
     });
 
     const [reportPages, setReportPages] = useState([]);
@@ -16,7 +17,7 @@ function GenerateReport() {
 
     const districts = [
         "Colombo", "Gampaha", "Kalutara", "Kandy", "Matale",
-        "Puttalam", "Trincomalee", "Ratnapura", "Nuwara Eliya",
+        "Puttalam", "Trincomalee", "Nuwara Eliya",
         "Matara", "Galle", "Hambantota", "Jaffna", "Kilinochchi",
         "Mannar", "Vavuniya", "Mullaitivu", "Batticaloa", "Ampara",
         "Kurunegala", "Anuradhapura", "Polonnaruwa", "Badulla",
@@ -95,6 +96,23 @@ function GenerateReport() {
         }
     };
 
+    // Disable download button if on page 10 and observedPrecipitation is invalid
+    const isDownloadDisabled =
+        (formData.observedPrecipitation === "" ||
+            isNaN(formData.observedPrecipitation) ||
+            formData.observedPrecipitation < 0 ||
+            formData.observedPrecipitation > 100);
+
+    useEffect(() => {
+        if (currentPage !== 9) {
+            // Highlight observed precipitation when navigating away from the 10th page
+            const observedField = document.getElementById("observedPrecipitation");
+            if (observedField && formData.observedPrecipitation !== "") {
+                observedField.style.color = "red";
+            }
+        }
+    }, [currentPage, formData.observedPrecipitation]);
+
     return (
         <div className="container">
             <div className="form-container">
@@ -165,13 +183,47 @@ function GenerateReport() {
                             ))}
                         </select>
                     </div>
+                    {currentPage === 9 && (
+                        <div className="form-group">
+                            <label htmlFor="observedPrecipitation" className="label">Observed Precipitation (%):</label>
+                            <input
+                                type="number"
+                                id="observedPrecipitation"
+                                name="observedPrecipitation"
+                                value={formData.observedPrecipitation}
+                                onChange={handleChange}
+                                className="input"
+                                min="0"
+                                max="100"
+                                required
+                            />
+                        </div>
+                    )}
                     <button type="submit" className="button">Generate Report</button>
                 </form>
                 {loading && <p className="loading">Generating report...</p>}
                 {error && <p className="error">{error}</p>}
                 {reportPages.length > 0 && (
                     <div className="button-container">
-                        <button onClick={handleDownload} className="button">Download Report</button>
+                        <button
+                            onClick={handleDownload}
+                            className={`button ${isDownloadDisabled ? "disabled-button" : ""}`}
+                            disabled={isDownloadDisabled}
+                        >
+                            Download Report
+                        </button>
+                        <p
+                            className="note"
+                            style={{
+                                color: isDownloadDisabled ? "red" : "green",
+                                marginTop: "10px",
+                                fontSize: "14px",
+                            }}
+                        >
+                            {isDownloadDisabled
+                                ? "Please go to page 10 to fill the observed precipitation field."
+                                : `Observed precipitation is filled: ${formData.observedPrecipitation}%`}
+                        </p>
                     </div>
                 )}
             </div>
@@ -209,7 +261,6 @@ function GenerateReport() {
             </div>
         </div>
     );
-
 }
 
 export default GenerateReport;
