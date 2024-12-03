@@ -44,7 +44,7 @@ const meteorologyData = [
         year: 2024,
         district: "Puttalam",
         content: {
-            text: "According to the available rainfall data in the Department of Meteorology, below normal rainfalls were reported from Anuradhapura, Kurunegala, Mathale, Kandy, Nuwara Eliya and Badulla districts. Near or above normal rainfalls were reported from other parts of the country during the month of October 2024.<p>Below Normal rainfalls were observed in Puttalam district. The observed Percent of Normal Precipitation was <OBSERVED_PERCIPITATION=40%> as district average.<p>Rainfall anomaly Category:<ul><li>Above Normal: 110 % < Rainfall anomaly<li>Near Normal: 90 % ≤ Rainfall anomaly ≤110 %<li>Below Normal: 90% > Rainfall anomaly</ul>",
+            text: "According to the available rainfall data in the Department of Meteorology, below normal rainfalls were reported from Anuradhapura, Kurunegala, Mathale, Kandy, Nuwara Eliya and Badulla districts. Near or above normal rainfalls were reported from other parts of the country during the month of October 2024.<p>Below Normal rainfalls were observed in Puttalam district. The observed Percent of Normal Precipitation was <OBSERVED_PERCIPITATION> as district average.<p>Rainfall anomaly Category:<ul><li>Above Normal: 110 % < Rainfall anomaly<li>Near Normal: 90 % ≤ Rainfall anomaly ≤110 %<li>Below Normal: 90% > Rainfall anomaly</ul>",
             png1: readImage(path.join(__dirname, 'images', '2024-11-00-DoM-Received-Monthly-Rainfall-October.png')),
             png2: readImage(path.join(__dirname, 'images', '2024-11-00-DoM-Percent-of-Normal-Precipitation-October.png')),
         },

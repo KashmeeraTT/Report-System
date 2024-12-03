@@ -75,7 +75,7 @@ async function findNearestPrevious(category, subcategory, district, year, month,
 }
 
 // Helper to generate an HTML section with page break
-function generateSection(title, data) {
+function generateSection(title, data, observedPrecipitation = null) {
     if (!data) {
         return `
             <div class="section" style="page-break-after: always;">
@@ -84,6 +84,16 @@ function generateSection(title, data) {
             </div>
             <!-- PAGE BREAK -->
         `;
+    }
+
+    // Replace the placeholder with the actual observed precipitation value
+    let updatedText = data.content.text;
+    if (observedPrecipitation) {
+        console.log(observedPrecipitation);
+        updatedText = updatedText.replace(
+            "<OBSERVED_PERCIPITATION>",
+            `${observedPrecipitation}%`
+        );
     }
 
     // Convert Buffer to base64 string to embed in HTML
@@ -101,14 +111,12 @@ function generateSection(title, data) {
         rows.forEach((row, rowIndex) => {
             const columns = row.split(",");
             if (rowIndex === 0) {
-                // Header row
                 htmlTable += "<tr>";
                 columns.forEach((cell) => {
                     htmlTable += `<th style="padding: 8px; background-color: #f2f2f2;">${cell.trim()}</th>`;
                 });
                 htmlTable += "</tr>";
             } else {
-                // Data rows
                 htmlTable += "<tr>";
                 columns.forEach((cell) => {
                     htmlTable += `<td style="padding: 8px;">${cell.trim()}</td>`;
@@ -121,14 +129,13 @@ function generateSection(title, data) {
         return htmlTable;
     };
 
-    // Render CSV 1 and CSV 2 tables
     const csv1Table = data.content.csv1 ? renderCsvToHtmlTable(data.content.csv1) : "";
     const csv2Table = data.content.csv2 ? renderCsvToHtmlTable(data.content.csv2) : "";
 
     return `
         <div class="section" style="page-break-after: always;">
             <h2>${title}</h2>
-            <p style="text-align: justify;">${data.content.text || "No text available."}</p>
+            <p style="text-align: justify;">${updatedText || "No text available."}</p>
             <div style="text-align: center; margin-top: 20px;">
                 ${png1Base64 ? `<img src="${png1Base64}" alt="${title} Image 1" style="max-width: 80%; margin: 10px auto;" />` : ""}
                 ${png2Base64 ? `<img src="${png2Base64}" alt="${title} Image 2" style="max-width: 80%; margin: 10px auto;" />` : ""}
@@ -143,7 +150,7 @@ function generateSection(title, data) {
 
 // Generate the report
 exports.generateReport = async (req, res) => {
-    const { year, month, day, district } = req.body;
+    const { year, month, day, district, observedPrecipitation } = req.body;
 
     try {
         const weekNumber = calculateWeekNumber(day, month, year);
@@ -248,7 +255,7 @@ exports.generateReport = async (req, res) => {
                     ${generateSection(`Weekly Rainfall ${district} District Week ${adjustedWeekNumbers[1].weekNumber} ${adjustedWeekNumbers[1].year}`, weeklyRainfall2)}
                     ${generateSection(`Weekly Rainfall ${district} District Week ${adjustedWeekNumbers[2].weekNumber} ${adjustedWeekNumbers[2].year}`, weeklyRainfall3)}
                     ${generateSection(`Weekly Rainfall ${district} District Week ${adjustedWeekNumbers[3].weekNumber} ${adjustedWeekNumbers[3].year}`, weeklyRainfall4)}
-                    ${generateSection(`Received Rainfall ${previousMonth} ${previousMonthYear}`, receivedRainfall)}
+                    ${generateSection(`Received Rainfall ${previousMonth} ${previousMonthYear}`, receivedRainfall, observedPrecipitation)}
                     ${generateSection(`General Climatological Rainfall ${month} ${year}`, climatologicalRainfall)}
                     ${generateSection(`Major Reservoir Water Availability as of ${day} ${month} ${year}`, majorReservoir)}
                     ${generateSection(`Medium Reservoir Water Availability as of ${day} ${month} ${year}`, mediumReservoir)}
