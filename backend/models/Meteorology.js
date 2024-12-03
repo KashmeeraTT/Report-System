@@ -13,9 +13,9 @@ const MeteorologySchema = new mongoose.Schema({
     subweekNumber: Number,
     content: {
         text: String,
-        png1: String,
-        png2: String,
-        png3: String,
+        png1: Buffer,
+        png2: Buffer,
+        png3: Buffer,
         csv1: String,
         csv2: String,
     },

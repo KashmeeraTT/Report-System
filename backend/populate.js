@@ -1,9 +1,17 @@
 const mongoose = require("mongoose");
+const fs = require("fs");
+const path = require("path");
 const Meteorology = require("./models/Meteorology");
 
 // Connect to MongoDB
 mongoose.connect("mongodb://localhost:27017/EnvironmentData");
 
+// Function to read a PNG file and convert it to Buffer
+const readImage = (imagePath) => {
+    return fs.readFileSync(imagePath);
+};
+
+// Sample Data
 const meteorologyData = [
     {
         department: "DoM",
@@ -12,170 +20,19 @@ const meteorologyData = [
         month: "October",
         year: 2024,
         content: {
-            text: "Rainfall is expected to be above normal.",
-            png1: "seasonal_rainfall_october.png",
+            text: "There is a possibility for Near Normal rainfall over Sri Lanka except Ampara and Batticaloa districts where there is a possibility for Below Normal rainfall, during OND 2024 as a whole.<br><br>However if La Nina onset occurs in October 2024 there is some possibility of below average rainfall over Mullaitivu, Trincomalee, Vavuniya, Kilinochchi and Jaffna districts as well. On the other hand development of the synoptic scale systems such as lows and depressions are also possible during the month of October and November. If so rainfall can increase.",
+            png1: readImage(path.join(__dirname, 'images', 'Screenshot 2024-12-03 113705.png')),  // Store image as Buffer
         },
     },
-    {
-        department: "DoM",
-        category: "Rainfall",
-        subcategory: "Monthly",
-        month: "November",
-        submonth: "November",
-        year: 2024,
-        content: {
-            text: "Rainfall is expected to be near normal.",
-            png1: "rainfall_forecast_november_november.png",
-        },
-    },
-    {
-        department: "DoM",
-        category: "Rainfall",
-        subcategory: "Monthly",
-        month: "November",
-        submonth: "December",
-        year: 2024,
-        content: {
-            text: "Rainfall is expected to be near normal.",
-            png1: "rainfall_forecast_november_december.png",
-        },
-    },
-    {
-        department: "DoM",
-        category: "Rainfall",
-        subcategory: "Monthly",
-        month: "November",
-        submonth: "January",
-        year: 2024,
-        content: {
-            text: "Rainfall is expected to be near normal.",
-            png1: "rainfall_forecast_november_january.png",
-        },
-    },
-    {
-        department: "DoM",
-        category: "Rainfall",
-        subcategory: "Weekly",
-        year: 2024,
-        weekNumber: 42,
-        subweekNumber: 1,
-        district: "Puttalam",
-        content: {
-            text: "Near or slightly below normal rainfall expected in Puttalam.",
-            png1: "weekly_rainfall_week1_october.png",
-        },
-    },
-    {
-        department: "DoM",
-        category: "Rainfall",
-        subcategory: "Weekly",
-        year: 2024,
-        weekNumber: 42,
-        subweekNumber: 2,
-        district: "Puttalam",
-        content: {
-            text: "Near or slightly below normal rainfall expected in Puttalam.",
-            png1: "weekly_rainfall_week1_october.png",
-        },
-    },
-    {
-        department: "DoM",
-        category: "Rainfall",
-        subcategory: "Weekly",
-        year: 2024,
-        weekNumber: 42,
-        subweekNumber: 3,
-        district: "Puttalam",
-        content: {
-            text: "Near or slightly below normal rainfall expected in Puttalam.",
-            png1: "weekly_rainfall_week1_october.png",
-        },
-    },
-    {
-        department: "DoM",
-        category: "Rainfall",
-        subcategory: "Weekly",
-        year: 2024,
-        weekNumber: 42,
-        subweekNumber: 4,
-        district: "Puttalam",
-        content: {
-            text: "Near or slightly below normal rainfall expected in Puttalam.",
-            png1: "weekly_rainfall_week1_october.png",
-        },
-    },
-    {
-        department: "DoM",
-        category: "Rainfall",
-        subcategory: "Recieved",
-        month: "September",
-        year: 2024,
-        district: "Puttalam",
-        content: {
-            text: "Rainfall received was significantly higher than average.",
-            png1: "received_rainfall_1.png",
-            png2: "received_rainfall_2.png",
-        },
-    },
-    {
-        department: "DoM",
-        category: "Rainfall",
-        subcategory: "Climatological",
-        month: "October",
-        year: 2024,
-        district: "Puttalam",
-        content: {
-            text: "Climatological data shows normal rainfall trends for October.",
-            csv1: "climatological_rainfall_1.csv",
-            csv2: "climatological_rainfall_2.csv",
-        },
-    },
-    {
-        department: "ID",
-        category: "Reservoir",
-        subcategory: "Major",
-        district: "Puttalam",
-        day: 9,
-        month: "October",
-        year: 2024,
-        content: {
-            csv1: "major_reservoir_october.csv",
-        },
-    },
-    {
-        department: "ID",
-        category: "Reservoir",
-        subcategory: "Medium",
-        district: "Puttalam",
-        day: 10,
-        month: "October",
-        year: 2024,
-        content: {
-            csv1: "medium_reservoir_october.csv",
-        },
-    },
-    {
-        department: "DAD",
-        category: "Reservoir",
-        subcategory: "Minor",
-        district: "Puttalam",
-        day: 10,
-        month: "October",
-        year: 2024,
-        content: {
-            png1: "tank1.png",
-            png2: "tank2.png",
-            png3: "tank3.png",
-        },
-    },
+    // Add other data here in similar fashion, using `readImage` for png1, png2, and png3
 ];
 
 async function populateData() {
     try {
-        await Meteorology.deleteMany();
-        await Meteorology.insertMany(meteorologyData);
+        await Meteorology.deleteMany();  // Clear any existing data
+        await Meteorology.insertMany(meteorologyData);  // Insert new data
         console.log("Database populated successfully!");
-        mongoose.connection.close();
+        mongoose.connection.close();  // Close connection after populating
     } catch (error) {
         console.error("Error populating database:", error);
     }

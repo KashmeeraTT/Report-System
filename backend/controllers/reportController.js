@@ -65,15 +65,23 @@ function generateSection(title, data) {
             <!-- PAGE BREAK -->
         `;
     }
+
+    // Convert Buffer to base64 string to embed in HTML
+    const png1Base64 = data.content.png1 ? `data:image/png;base64,${data.content.png1.toString('base64')}` : null;
+    const png2Base64 = data.content.png2 ? `data:image/png;base64,${data.content.png2.toString('base64')}` : null;
+    const png3Base64 = data.content.png3 ? `data:image/png;base64,${data.content.png3.toString('base64')}` : null;
+
     return `
         <div class="section">
             <h2>${title}</h2>
-            <p>${data.content.text || "No text available."}</p>
-            ${data.content.png1 ? `<img src="${data.content.png1}" alt="${title} Image 1" />` : ""}
-            ${data.content.png2 ? `<img src="${data.content.png2}" alt="${title} Image 2" />` : ""}
-            ${data.content.png3 ? `<img src="${data.content.png3}" alt="${title} Image 3" />` : ""}
-            ${data.content.csv1 ? `<p>CSV File 1: <a href="${data.content.csv1}" target="_blank">Download</a></p>` : ""}
-            ${data.content.csv2 ? `<p>CSV File 2: <a href="${data.content.csv2}" target="_blank">Download</a></p>` : ""}
+            <p style="text-align: justify;">${data.content.text || "No text available."}</p>
+            <div style="text-align: center;">
+                ${png1Base64 ? `<img src="${png1Base64}" alt="${title} Image 1" />` : ""}
+                ${png2Base64 ? `<img src="${png2Base64}" alt="${title} Image 2" />` : ""}
+                ${png3Base64 ? `<img src="${png3Base64}" alt="${title} Image 3" />` : ""}
+                ${data.content.csv1 ? `<p>CSV File 1: <a href="${data.content.csv1}" target="_blank">Download</a></p>` : ""}
+                ${data.content.csv2 ? `<p>CSV File 2: <a href="${data.content.csv2}" target="_blank">Download</a></p>` : ""}
+            </div>
         </div>
         <!-- PAGE BREAK -->
     `;
@@ -119,14 +127,14 @@ exports.generateReport = async (req, res) => {
                 <h1>District Agro-met Advisory Co-production</h1>
                 <h2>${district} District</h2>
                 <h3>${day} ${month} ${year}</h3>
-                <p>
+                <p style="text-align: justify;">
                     The Natural Resources Management Centre, Department of Agriculture (NRMC, DoA) 
                     has released the Agro-met advisory for ${month} ${year}, incorporating weather 
                     forecasts from the Department of Meteorology (DoM) and irrigation water availability 
                     information from various departments. Field-level data were collected from multiple sources 
                     to compile this report.
                 </p>
-                <p>
+                <p style="text-align: justify;">
                     The Department of Meteorology (DoM) has issued the seasonal weather forecast 
                     for the upcoming three-month period, outlining anticipated weather conditions.
                 </p>
@@ -176,7 +184,7 @@ exports.generateReport = async (req, res) => {
                 </head>
                 <body>
                     ${introduction}
-                    ${generateSection(`Seasonal Rainfall Forecast ${month} ${year}`, seasonalRainfall)}
+                    ${generateSection(`Seasonal Rainfall Forecast ${month} ${year} - ${nextMonth2} ${nextMonth2Year}`, seasonalRainfall)}
                     ${generateSection(`Rainfall Forecast ${month} ${year}`, rainfallForecast1)}
                     ${generateSection(`Rainfall Forecast ${nextMonth1} ${nextMonth1Year}`, rainfallForecast2)}
                     ${generateSection(`Rainfall Forecast ${nextMonth2} ${nextMonth2Year}`, rainfallForecast3)}
