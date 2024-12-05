@@ -37,7 +37,7 @@ function GenerateReport() {
         setCurrentPage(0);
 
         try {
-            const response = await fetch("http://localhost:3000/api/reports/generate-report", {
+            const response = await fetch("http://localhost:3000/api/reports/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
@@ -61,7 +61,7 @@ function GenerateReport() {
 
     const handleDownload = async () => {
         try {
-            const response = await fetch("http://localhost:3000/api/reports/generate-report", {
+            const response = await fetch("http://localhost:3000/api/reports/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
